@@ -266,6 +266,71 @@
       padding: 15px;
     }
   }
+
+  /* iPhone 12 Pro向けの追加レスポンシブ対応（幅390px） */
+  @media (min-width: 375px) and (max-width: 390px) {
+    body {
+      padding: 15px 10px;
+    }
+
+    .main-title {
+      font-size: 22px;
+    }
+
+    .page-container {
+      gap: 20px;
+    }
+
+    .tweet-container {
+      padding: 14px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+    }
+
+    .tweet-footer {
+      justify-content: space-around;
+      font-size: 12px;
+    }
+
+    .tweet-footer i {
+      margin-right: 6px;
+    }
+
+    .editor-section {
+      border-radius: 10px;
+    }
+
+    .editor-header {
+      padding: 12px 15px;
+    }
+
+    .editor-header h2 {
+      font-size: 16px;
+    }
+
+    .editor-body {
+      padding: 12px;
+    }
+
+    .input-section {
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+
+    .input-group textarea, 
+    .input-group input {
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    .btn-update {
+      padding: 10px 0;
+      font-size: 14px;
+    }
+  }
 </style>
 </head>
 <body>
