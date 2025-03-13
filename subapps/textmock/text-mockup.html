@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitter Tweet Mockup</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f9fa;
+    margin: 0;
+    padding: 20px;
+    color: #0f1419;
+  }
+
+  .page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 30px;
+  }
+
+  .main-title {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #1DA1F2;
+    font-size: 24px;
+  }
+
+  /* ツイートのスタイル調整 */
+  .tweet-container {
+    background-color: #fff;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 16px;
+    width: 470px;
+    max-width: 100%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+  }
+
+  .tweet-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .avatar {
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    margin-right: 12px;
+    object-fit: cover;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .name-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .name {
+    font-weight: bold;
+    font-size: 15px;
+    margin-right: 4px;
+  }
+
+  .username {
+    color: #536471;
+    font-size: 14px;
+  }
+
+  .tweet-content {
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 12px 0;
+    word-break: break-word;
+  }
+
+  .tweet-content p {
+    margin: 0;
+    padding: 0;
+  }
+
+  .tweet-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    color: #536471;
+    font-size: 13px;
+    max-width: 425px;
+  }
+
+  .tweet-footer > span {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .tweet-footer i {
+    margin-right: 8px;
+    font-size: 16px;
+  }
+
+  .tweet-footer span:hover {
+    color: #1DA1F2;
+  }
+  .tweet-footer .fa-comment:hover { color: #1DA1F2; }
+  .tweet-footer .fa-retweet:hover { color: #00BA7C; }
+  .tweet-footer .fa-heart:hover { color: #F91880; }
+  .tweet-footer .fa-bookmark:hover { color: #1DA1F2; }
+
+  /* 入力コンテナのグラフィカルなスタイル */
+  .editor-section {
+    width: 470px;
+    max-width: 100%;
+    background: linear-gradient(145deg, #1da1f2, #0d8edb);
+    border-radius: 12px;
+    color: white;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(29, 161, 242, 0.3);
+  }
+
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .editor-header h2 {
+    margin: 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+  }
+
+  .editor-header i {
+    margin-right: 10px;
+  }
+
+  .editor-body {
+    padding: 20px;
+  }
+
+  .input-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .input-section-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .input-section-title i {
+    margin-right: 8px;
+  }
+
+  .input-group {
+    margin-bottom: 15px;
+  }
+
+  .input-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .input-group textarea, 
+  .input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    box-sizing: border-box;
+  }
+
+  .input-group textarea::placeholder, 
+  .input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .input-group textarea {
+    height: 100px;
+    resize: vertical;
+  }
+
+  .counts-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .count-input input {
+    transition: all 0.2s ease;
+  }
+
+  .count-input input:focus {
+    border-color: white;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-update {
+    background-color: white;
+    color: #1DA1F2;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 0;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+  }
+
+  .btn-update i {
+    margin-right: 8px;
+  }
+
+  .btn-update:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* iPhone向けレスポンシブ対応 */
+  @media (max-width: 500px) {
+    .tweet-container, .editor-section {
+      width: 100%;
+    }
+
+    .tweet-footer {
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .counts-container {
+      grid-template-columns: 1fr;
+    }
+
+    .editor-body {
+      padding: 15px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-container">
+  <h1 class="main-title">Text Generator</h1>
+
+  <!-- ツイートプレビュー -->
+  <div class="tweet-container">
+    <div class="tweet-header">
+      <img class="avatar" src="./ojogori_logo.PNG" alt="ユーザーアバター">
+      <div class="user-info">
+        <div class="name-container">
+          <span class="name">おじょゴリ</span>
+          <span class="username">@ojogori_gpt</span>
+        </div>
+        <span class="username" id="time-ago">13時間前</span>
+      </div>
+    </div>
+    <div class="tweet-content">
+      <p id="tweet-text">毎日ちょっとずつでいいから、成長しよう。AIを活用してスキルを磨くのも、新しいツールを試すのも、全部前進の一歩。今日の自分が昨日より少しでも成長していたら、それで大成功。焦らず、コツコツ続けていこう！</p>
+    </div>
+    <div class="tweet-footer">
+      <span class="reply"><i class="far fa-comment"></i> <span id="comment-count">213</span></span>
+      <span class="retweet"><i class="fas fa-retweet"></i> <span id="retweet-count">14.2万</span></span>
+      <span class="like"><i class="far fa-heart"></i> <span id="like-count">34.9万</span></span>
+      <span class="view-count"><i class="far fa-eye"></i> <span id="view-count">1002万</span></span>
+      <span class="save"><i class="far fa-bookmark"></i></span>
+    </div>
+  </div>
+
+  <!-- 入力フォーム（グラフィカルデザイン） -->
+  <div class="editor-section">
+    <div class="editor-header">
+      <h2><i class="fas fa-edit"></i>テキストエディター</h2>
+    </div>
+    <div class="editor-body">
+      <!-- ツイート内容セクション -->
+      <div class="input-section">
+        <div class="input-section-title">
+          <i class="fas fa-align-left"></i> 投稿内容
+        </div>
+        <div class="input-group">
+          <label for="input-tweet">テキスト:</label>
+          <textarea id="input-tweet" placeholder="ツイート内容を入力してください">毎日ちょっとずつでいいから、成長しよう。AIを活用してスキルを磨くのも、新しいツールを試すのも、全部前進の一歩。今日の自分が昨日より少しでも成長していたら、それで大成功。焦らず、コツコツ続けていこう！</textarea>
+        </div>
+
+        <div class="input-group">
+          <label for="input-time">投稿時間:</label>
+          <input type="text" id="input-time" value="13時間前">
+        </div>
+      </div>
+
+      <!-- エンゲージメント数セクション -->
+      <div class="input-section">
+        <div class="input-section-title">
+          <i class="fas fa-chart-line"></i> エンゲージメント
+        </div>
+        <div class="counts-container">
+          <div class="count-input">
+            <label for="input-comments"><i class="far fa-comment"></i> コメント:</label>
+            <input type="text" id="input-comments" value="213">
+          </div>
+          
+          <div class="count-input">
+            <label for="input-retweets"><i class="fas fa-retweet"></i> リツイート:</label>
+            <input type="text" id="input-retweets" value="14.2万">
+          </div>
+          
+          <div class="count-input">
+            <label for="input-likes"><i class="far fa-heart"></i> いいね:</label>
+            <input type="text" id="input-likes" value="34.9万">
+          </div>
+          
+          <div class="count-input">
+            <label for="input-views"><i class="far fa-eye"></i> 閲覧数:</label>
+            <input type="text" id="input-views" value="1002万">
+          </div>
+        </div>
+      </div>
+      
+      <button class="btn-update" onclick="updateTweet()">
+        <i class="fas fa-sync-alt"></i> プレビューを更新
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateTweet() {
+    // テキストエリアから内容を取得し、改行をbrタグに変換
+    const tweetText = document.getElementById('input-tweet').value.replace(/\n/g, '<br>');
+    document.getElementById('tweet-text').innerHTML = tweetText;
+    
+    // 投稿時間を更新
+    document.getElementById('time-ago').textContent = document.getElementById('input-time').value;
+    
+    // 各エンゲージメント数を更新
+    document.getElementById('comment-count').textContent = document.getElementById('input-comments').value;
+    document.getElementById('retweet-count').textContent = document.getElementById('input-retweets').value;
+    document.getElementById('like-count').textContent = document.getElementById('input-likes').value;
+    document.getElementById('view-count').textContent = document.getElementById('input-views').value;
+  }
+</script>
+
+</body>
+</html>

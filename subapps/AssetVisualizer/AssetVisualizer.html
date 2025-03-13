@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資産総額ビジュアライザー</title>
+    <style>
+        /* 基本スタイル */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            padding: 20px;
+            transition: background-color 0.5s ease;
+        }
+        
+        /* メインコンテナのスタイル */
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            margin-bottom: 60px; /* 円グラフとフォームの間のスペースを増やす */
+        }
+        
+        /* 円グラフのコンテナ */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; /* アスペクト比1:1を維持 */
+        }
+        
+        /* SVG円グラフ */
+        .chart {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 中央の金額表示 */
+        .amount-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            width: 100%;
+        }
+        
+        /* 資産額のスタイル */
+        .total-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        /* 「資産総額」表示のスタイル */
+        .amount-label {
+            font-size: 1rem;
+            color: #666;
+            transition: font-size 0.3s ease;
+        }
+        
+        /* 入力フォームのスタイル */
+        .input-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        label {
+            font-size: 0.9rem;
+            color: #666;
+            text-align: left;
+        }
+        
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        button {
+            padding: 12px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #0055aa;
+        }
+        
+        /* カラーパレットのスタイル */
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border: 2px solid #333;
+            transform: scale(1.1);
+        }
+        
+        /* 背景色選択のスタイル */
+        .bg-color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .bg-color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .bg-color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .bg-color-option.selected {
+            border: 2px solid #333;
+            transform: scale(1.1);
+        }
+        
+        /* クロマキー用のオプションラベル */
+        .chromakey-label {
+            font-size: 0.7rem;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 3px;
+            padding: 2px 4px;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        
+        /* クロマキーオプションのコンテナ */
+        .chromakey-container {
+            position: relative;
+        }
+        
+        /* フォントサイズ調整ボタン */
+        .font-size-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .font-size-btn {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+            background-color: #eee;
+            cursor: pointer;
+            user-select: none;
+            font-weight: bold;
+        }
+        
+        .font-size-btn:hover {
+            background-color: #ddd;
+        }
+        
+        /* テキスト編集と文字サイズコントロールを横並びにする */
+        .text-edit-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .text-input {
+            flex-grow: 1;
+        }
+        
+        /* レスポンシブ対応 */
+        @media (min-width: 768px) {
+            .total-amount {
+                font-size: 3rem;
+            }
+            
+            .amount-label {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 円グラフを表示するコンテナ -->
+        <div class="chart-container">
+            <svg class="chart" viewBox="0 0 100 100">
+                <!-- 背景の円（白） -->
+                <circle cx="50" cy="50" r="45" fill="white" />
+                
+                <!-- 外周の円（グレー） -->
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="10" />
+                
+                <!-- アニメーションする円弧 -->
+                <path id="progress-arc" fill="none" stroke="#0066cc" stroke-width="10" />
+                
+                <!-- アニメーション完了後の完全な円 -->
+                <circle id="complete-circle" cx="50" cy="50" r="45" fill="none" stroke="#0066cc" stroke-width="10" stroke-opacity="0" />
+            </svg>
+            
+            <!-- 中央の金額表示 -->
+            <div class="amount-display">
+                <div id="amount-label" class="amount-label">資産総額</div>
+                <div id="total-amount" class="total-amount">¥0</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 入力フォーム -->
+    <div class="input-container">
+        <button id="submit-button">スタート</button>
+        <div class="input-group">
+            <label for="asset-input">金額（円）</label>
+            <input type="text" id="asset-input" placeholder="例: 3000000" value="3000000">
+        </div>
+        <div class="input-group">
+            <label for="label-text">表示テキスト</label>
+            <div class="text-edit-group">
+                <input type="text" id="label-text" class="text-input" placeholder="例: 資産総額" value="資産総額">
+                <div class="font-size-controls">
+                    <div id="font-size-decrease" class="font-size-btn">-</div>
+                    <div id="font-size-increase" class="font-size-btn">+</div>
+                </div>
+            </div>
+        </div>
+        <div class="input-group">
+            <label>円グラフの色</label>
+            <div class="color-palette" id="color-palette">
+                <!-- カラーパレット（JavaScriptで生成） -->
+            </div>
+        </div>
+        <div class="input-group">
+            <label>背景の色</label>
+            <div class="bg-color-palette" id="bg-color-palette">
+                <!-- 背景色パレット（JavaScriptで生成） -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ページ読み込み完了時にアニメーションを開始
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM要素の取得
+            const progressArc = document.getElementById('progress-arc');
+            const completeCircle = document.getElementById('complete-circle');
+            const totalAmountElement = document.getElementById('total-amount');
+            const amountLabelElement = document.getElementById('amount-label');
+            const assetInput = document.getElementById('asset-input');
+            const labelTextInput = document.getElementById('label-text');
+            const fontSizeIncrease = document.getElementById('font-size-increase');
+            const fontSizeDecrease = document.getElementById('font-size-decrease');
+            const submitButton = document.getElementById('submit-button');
+            const colorPalette = document.getElementById('color-palette');
+            const bgColorPalette = document.getElementById('bg-color-palette');
+            const bodyElement = document.body;
+            
+            // 円の中心と半径
+            const centerX = 50;
+            const centerY = 50;
+            const radius = 45;
+            
+            // 初期値
+            let finalAmount = 3000000;
+            let isAnimating = false;
+            let selectedColor = '#0066cc'; // デフォルトの色
+            let selectedBgColor = '#f5f5f5'; // デフォルトの背景色
+            let labelFontSize = 1; // rem単位のフォントサイズ
+            let labelText = '資産総額'; // デフォルトのラベルテキスト
+            
+            // カラーパレットの色リスト
+            const colors = [
+                '#0066cc', // デフォルトの青
+                '#e74c3c', // 赤
+                '#2ecc71', // 緑
+                '#f1c40f', // 黄色
+                '#9b59b6', // 紫
+                '#e67e22', // オレンジ
+                //'#1abc9c', // ティール
+                //'#34495e', // ダークブルー
+                '#d35400', // 深いオレンジ
+                '#27ae60'  // 深い緑
+            ];
+            
+            // 背景色パレットの色リスト
+            const bgColors = [
+                '#f5f5f5', // デフォルトの薄いグレー
+                '#e8f4f8', // 薄い青
+                '#f8e8e8', // 薄い赤
+                '#e8f8e8', // 薄い緑
+                '#f8f8e8', // 薄い黄色
+                '#f0e8f8', // 薄い紫
+                '#f8efe8', // 薄いオレンジ
+                //'#e8f8f5', // 薄いティール
+                //'#e8eaef', // 薄いダークブルー
+                //'#ffffff', // 白
+                '#00b140'  // クロマキーグリーン
+            ];
+            
+            // カラーパレットの生成
+            colors.forEach(color => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color;
+                if (color === selectedColor) {
+                    colorOption.classList.add('selected');
+                }
+                
+                // クリックイベントの追加
+                colorOption.addEventListener('click', function() {
+                    // すべての選択状態をリセット
+                    document.querySelectorAll('.color-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    
+                    // 選択した色を設定
+                    selectedColor = color;
+                    this.classList.add('selected');
+                    
+                    // 円弧と完全な円の色を更新
+                    progressArc.setAttribute('stroke', selectedColor);
+                    completeCircle.setAttribute('stroke', selectedColor);
+                    
+                    // Submit ボタンの色も更新
+                    submitButton.style.backgroundColor = selectedColor;
+                });
+                
+                colorPalette.appendChild(colorOption);
+            });
+            
+            // 背景色パレットの生成
+            bgColors.forEach((bgColor, index) => {
+                // クロマキーグリーンの場合は特別な処理
+                if (bgColor === '#00b140') {
+                    const chromakeyContainer = document.createElement('div');
+                    chromakeyContainer.className = 'chromakey-container';
+                    
+                    const bgColorOption = document.createElement('div');
+                    bgColorOption.className = 'bg-color-option';
+                    bgColorOption.style.backgroundColor = bgColor;
+                    if (bgColor === selectedBgColor) {
+                        bgColorOption.classList.add('selected');
+                    }
+                    
+                    // ラベルを追加
+                    const label = document.createElement('div');
+                    //label.className = 'chromakey-label';
+                    //label.textContent = 'クロマキー';
+                    
+                    // クリックイベントの追加
+                    bgColorOption.addEventListener('click', function() {
+                        // すべての選択状態をリセット
+                        document.querySelectorAll('.bg-color-option').forEach(option => {
+                            option.classList.remove('selected');
+                        });
+                        
+                        // 選択した背景色を設定
+                        selectedBgColor = bgColor;
+                        this.classList.add('selected');
+                        
+                        // 背景色を更新
+                        bodyElement.style.backgroundColor = selectedBgColor;
+                    });
+                    
+                    chromakeyContainer.appendChild(bgColorOption);
+                    chromakeyContainer.appendChild(label);
+                    bgColorPalette.appendChild(chromakeyContainer);
+                } else {
+                    const bgColorOption = document.createElement('div');
+                    bgColorOption.className = 'bg-color-option';
+                    bgColorOption.style.backgroundColor = bgColor;
+                    if (bgColor === selectedBgColor) {
+                        bgColorOption.classList.add('selected');
+                    }
+                    
+                    // クリックイベントの追加
+                    bgColorOption.addEventListener('click', function() {
+                        // すべての選択状態をリセット
+                        document.querySelectorAll('.bg-color-option').forEach(option => {
+                            option.classList.remove('selected');
+                        });
+                        
+                        // 選択した背景色を設定
+                        selectedBgColor = bgColor;
+                        this.classList.add('selected');
+                        
+                        // 背景色を更新
+                        bodyElement.style.backgroundColor = selectedBgColor;
+                    });
+                    
+                    bgColorPalette.appendChild(bgColorOption);
+                }
+            });
+            
+            // 文字サイズ増加ボタンのイベント
+            fontSizeIncrease.addEventListener('click', function() {
+                // 最大値を3remに制限
+                if (labelFontSize < 3) {
+                    labelFontSize += 0.1;
+                    updateLabelFontSize();
+                }
+            });
+            
+            // 文字サイズ減少ボタンのイベント
+            fontSizeDecrease.addEventListener('click', function() {
+                // 最小値を0.5remに制限
+                if (labelFontSize > 0.5) {
+                    labelFontSize -= 0.1;
+                    updateLabelFontSize();
+                }
+            });
+            
+            // ラベルテキスト入力のイベント
+            labelTextInput.addEventListener('input', function() {
+                labelText = this.value;
+                amountLabelElement.textContent = labelText;
+            });
+            
+            // ラベルのフォントサイズを更新する関数
+            function updateLabelFontSize() {
+                amountLabelElement.style.fontSize = labelFontSize + 'rem';
+            }
+            
+            // 円弧のパスを計算する関数
+            function describeArc(x, y, radius, startAngle, endAngle) {
+                // 角度をラジアンに変換
+                const start = (startAngle - 90) * Math.PI / 180;
+                const end = (endAngle - 90) * Math.PI / 180;
+                
+                // 円弧の始点と終点の座標を計算
+                const startX = x + radius * Math.cos(start);
+                const startY = y + radius * Math.sin(start);
+                const endX = x + radius * Math.cos(end);
+                const endY = y + radius * Math.sin(end);
+                
+                // 大円弧フラグ（180度以上なら1、未満なら0）
+                const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+                
+                // SVGのパスデータを生成
+                return [
+                    "M", startX, startY, 
+                    "A", radius, radius, 0, largeArcFlag, 1, endX, endY
+                ].join(" ");
+            }
+            
+            // カウントアップアニメーション関数
+            function animateCountUp() {
+                // アニメーション中フラグをセット
+                isAnimating = true;
+                
+                // アニメーション設定
+                const animationDuration = 1500; // ミリ秒
+                
+                // アニメーション開始前の準備
+                progressArc.style.display = 'block';
+                progressArc.setAttribute('stroke', selectedColor);
+                completeCircle.setAttribute('stroke', selectedColor);
+                completeCircle.setAttribute('stroke-opacity', '0');
+                
+                // 開始時間を記録
+                const startTime = performance.now();
+                
+                // アニメーションフレームを更新する関数
+                function updateFrame(currentTime) {
+                    // 経過時間を計算（0～1の範囲）
+                    const elapsed = Math.min((currentTime - startTime) / animationDuration, 1);
+                    
+                    // イージング関数（滑らかな加速と減速）
+                    const progress = easeInOutQuad(elapsed);
+                    
+                    // 現在の金額を計算
+                    const currentAmount = Math.floor(progress * finalAmount);
+                    
+                    // 金額表示を更新
+                    totalAmountElement.textContent = '¥' + currentAmount.toLocaleString();
+                    
+                    // 円弧の角度を計算（0度から360度）
+                    const endAngle = progress * 360;
+                    
+                    // 円弧のパスを更新
+                    progressArc.setAttribute('d', describeArc(centerX, centerY, radius, 0, endAngle));
+                    
+                    // アニメーションが完了した場合（360°）
+                    if (elapsed === 1) {
+                        // 一度円弧を非表示にして完全な円を表示する
+                        progressArc.style.display = 'none';
+                        completeCircle.setAttribute('stroke-opacity', '1');
+                        // アニメーション中フラグを解除
+                        isAnimating = false;
+                    }
+                    
+                    // アニメーションが完了していない場合、次のフレームをリクエスト
+                    if (elapsed < 1) {
+                        requestAnimationFrame(updateFrame);
+                    }
+                }
+                
+                // 最初のフレームをリクエスト
+                requestAnimationFrame(updateFrame);
+            }
+            
+            // イージング関数（滑らかな加速と減速）
+            function easeInOutQuad(t) {
+                return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            }
+            
+            // 入力された金額の形式をチェックする関数
+            function validateAmount(input) {
+                // カンマなどを取り除く
+                const cleanedInput = input.replace(/[¥,\s]/g, '');
+                // 数値に変換
+                const amount = parseInt(cleanedInput);
+                
+                // 数値かつ正の値であるかチェック
+                if (!isNaN(amount) && amount > 0) {
+                    return amount;
+                }
+                
+                return null;
+            }
+            
+            // スタートボタンのクリックイベント
+            submitButton.addEventListener('click', function() {
+                // アニメーション中は何もしない
+                if (isAnimating) return;
+                
+                // 入力された金額を検証
+                const newAmount = validateAmount(assetInput.value);
+                
+                if (newAmount) {
+                    // 新しい金額を設定
+                    finalAmount = newAmount;
+                    // 入力欄にフォーマットした金額を表示
+                    assetInput.value = newAmount.toLocaleString();
+                    // テキストラベルを更新
+                    labelText = labelTextInput.value;
+                    amountLabelElement.textContent = labelText;
+                    // アニメーションを開始
+                    animateCountUp();
+                } else {
+                    // 無効な入力の場合、エラーメッセージを表示
+                    alert('有効な金額を入力してください');
+                    // 入力欄を元の値に戻す
+                    assetInput.value = finalAmount.toLocaleString();
+                }
+            });
+            
+            // ボタンの色を初期設定
+            submitButton.style.backgroundColor = selectedColor;
+            
+            // 初期値のフォーマット
+            assetInput.value = finalAmount.toLocaleString();
+            labelTextInput.value = labelText;
+            amountLabelElement.textContent = labelText;
+            
+            // 初期フォントサイズの設定
+            updateLabelFontSize();
+            
+            // ページ読み込み時にアニメーションを開始
+            animateCountUp();
+        });
+    </script>
+</body>
+</html>
